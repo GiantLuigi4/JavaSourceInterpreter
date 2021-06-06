@@ -51,7 +51,7 @@ public class JavaExpressionMethod extends Value {
 	
 	@Override
 	public double get(ExpressionParser parser) {
-		workingVar.val = null;
+		workingVar.val = invoker;
 		for (String s : methodsCalled) {
 			if (!s.contains("(")) {
 				if (((InterpretedObject) locals.get(s).val).obj instanceof Number) workingVar.val = ((InterpretedObject) locals.get(s).val).obj;
