@@ -6,6 +6,7 @@ import com.tfc.bytecode.utils.Parser;
 import com.tfc.bytecode.utils.class_structure.*;
 import tfc.expression_solver.Expression;
 import tfc.expression_solver.ExpressionParser;
+import tfc.java_interpreter.data.LangObject;
 import tfc.java_interpreter.natives.IntegerClass;
 import tfc.java_interpreter.reflections.ReflectionClass;
 import tfc.java_interpreter.structure.InterpretedClass;
@@ -23,6 +24,7 @@ public class Interpreter {
 	public final InterpretedClass intClass;
 	
 	public Interpreter() {
+		parser.methods.add(new JavaMethodMarker());
 		InterpretedClass interpretedClass = new IntegerClass();
 		classes.put(interpretedClass.name, interpretedClass);
 		intClass = interpretedClass;
@@ -48,21 +50,25 @@ public class Interpreter {
 	
 	public InterpretedClass $getOrLoad(String file) {
 		file = Formatter.formatForCompile(file);
-		System.out.println(file);
+//		System.out.println(file);
 		ClassNode n = Parser.parse(file);
 		if (classes.containsKey(n.name)) return classes.get(n.name);
 		String access = Access.parseAccess(n.modifs);
 		InterpretedClass clazz = new InterpretedClass(access.contains("final"), EnumProtectionLevel.get(access), n.name);
-		System.out.println(clazz.toString());
+//		System.out.println(clazz.toString());
 		classes.put(clazz.name, clazz);
 		for (FieldNodeSource field : n.fields) {
-			Expression expression = parser.parse(field.code);
 			FieldNode node = new FieldNode(field);
+			Expression expression = parser.parse(field.code.substring((Access.parseAccess(node.access) + " " + field.getType() + node.name).length() + 3));
 			access = Access.parseAccess(node.access);
 			InterpretedField field1 = new InterpretedField(access.contains("final"), EnumProtectionLevel.get(access), getOrLoad(field.getType()));
 			field1.defaultExpression = expression;
 			field1.isStatic = access.contains("static");
-			// TODO: setup parser to set value of object
+			{
+				LangObject workingVar = new LangObject();
+				JavaMethodMarker.locals = null;
+				JavaMethodMarker.workingVar = workingVar;
+			}
 			expression.get();
 			clazz.fields.put(field1.name = field.getName(), field1);
 		}
@@ -72,9 +78,18 @@ public class Interpreter {
 			InterpretedMethod m = new InterpretedMethod(access.contains("final"), EnumProtectionLevel.get(access), method.getName());
 			m.interpreter = this;
 			m.descArgs = node.desc;
+			String args = method.code.substring(method.code.indexOf(method.getName() + "(") + (method.getName().length()));
+			args = args.substring(1, args.indexOf(")")).trim();
+			if (args.length() != 0) {
+				for (String s : args.split(", ")) {
+					String[] parts = s.split(" ");
+//					System.out.println(parts[0] + ":" + parts[1]);
+					m.argNames.add(parts[1]);
+				}
+			}
 			String[] lines = method.code.split("\n");
 			m.lines = new ArrayList<>(Arrays.asList(lines).subList(1, lines.length - 1));
-			System.out.println(method.getType());
+//			System.out.println(method.getType());
 			clazz.methods.put(method.getName(), m);
 		}
 		return clazz;

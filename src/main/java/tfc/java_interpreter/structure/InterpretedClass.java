@@ -47,6 +47,21 @@ public class InterpretedClass {
 		return methods.get(name);
 	}
 	
+	public InterpretedMethod getMethod(String name, String desc) {
+		for (InterpretedMethod value : methods.values())
+			if (value.name.equals(name) && value.descArgs.equals(desc))
+				return value;
+		return null;
+	}
+	public InterpretedMethod getMethod(String name, InterpretedClass... args) {
+		for (InterpretedMethod value : methods.values())
+			if (value.name.equals(name)) {
+				// TODO
+				return value;
+			}
+		return null;
+	}
+	
 	public InterpretedField getField(String name) {
 		return fields.get(name);
 	}

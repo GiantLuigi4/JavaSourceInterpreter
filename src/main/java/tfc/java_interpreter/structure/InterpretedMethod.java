@@ -3,6 +3,7 @@ package tfc.java_interpreter.structure;
 import tfc.expression_solver.Expression;
 import tfc.java_interpreter.EnumProtectionLevel;
 import tfc.java_interpreter.Interpreter;
+import tfc.java_interpreter.JavaMethodMarker;
 import tfc.java_interpreter.data.InterpretedObject;
 import tfc.java_interpreter.data.LangObject;
 import tfc.java_interpreter.data.VoidReturnMarker;
@@ -19,6 +20,7 @@ public class InterpretedMethod {
 	public boolean isStatic = false;
 	public String descArgs;
 	public Interpreter interpreter;
+	public ArrayList<String> argNames = new ArrayList<>();
 	
 	public InterpretedMethod(boolean isFinal, EnumProtectionLevel protection, String name) {
 		this.isFinal = isFinal;
@@ -44,11 +46,17 @@ public class InterpretedMethod {
 		return true;
 	}
 	
+	@Override
+	public String toString() {
+		return '(' + "name: " + name + ", lines: " + lines.size() + ')';
+	}
+	
 	public Object invoke(LangObject invoker, LangObject invoked, LangObject... args) {
 		HashMap<String, LangObject> locals = new HashMap<>();
+		for (int i = 0; i < args.length; i++) locals.put(argNames.get(i), args[i]);
 		loopLines:
 		for (String line : lines) {
-			System.out.println(line);
+//			System.out.println(line);
 			if (line.startsWith("return")) {
 				if (descArgs.endsWith("V")) return VoidReturnMarker.INSTANCE;
 				LangObject returnVal = new LangObject();
@@ -75,19 +83,20 @@ public class InterpretedMethod {
 						name = parts[i];
 						locals.put(name, new LangObject());
 					} else if (i == 1) {
-						if (!Objects.equals(parts[i], "=")) {
-							throw new RuntimeException(new IllegalArgumentException(name + ":" + line)); // TODO: descriptions of exceptions
-						}
+						if (!Objects.equals(parts[i], "=")) throw new RuntimeException(new IllegalArgumentException(name + ":" + line)); // TODO: descriptions of exceptions
 					} else {
 						ex.append(parts[i]).append(" ");
 					}
 				}
-				Expression expression = interpreter.parser.parse(ex.toString());
+				ex = new StringBuilder(ex.substring(0, ex.length()-2));
 				LangObject obj = locals.get(name);
 				obj.val = new InterpretedObject();
 				((InterpretedObject)obj.val).isStaticContext = false;
 				((InterpretedObject) obj.val).clazz = interpreter.intClass;
-				((InterpretedObject) obj.val).obj = expression.get();
+				if (!ex.toString().equals("")) {
+					Expression expression = interpreter.parser.parse(ex.toString());
+					((InterpretedObject) obj.val).obj = expression.get();
+				}
 				continue;
 			}
 			for (String localName : locals.keySet()) {
@@ -95,13 +104,20 @@ public class InterpretedMethod {
 					String operator = getAssignmentOperator(line, localName);
 					InterpretedObject object = ((InterpretedObject)(locals.get(localName).val));
 					Object o = object.obj;
-					if (o instanceof Number) object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, localName)));
-					else if (operator.equals("=")) {
-						// TODO: expression assignment related stuff
-						interpreter.parser.parse(getAssignmentExpression(line, localName));
+					LangObject workingVar = new LangObject();
+					{
+						JavaMethodMarker.locals = locals;
+						JavaMethodMarker.invoker = invoked;
+						JavaMethodMarker.workingVar = workingVar;
+					}
+					if (o instanceof Number && operator.charAt(0) != '=') {
+						object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, localName)));
+					} else if (operator.equals("=")) {
+						double val = interpreter.parser.parse(getAssignmentExpression(line, localName)).get();
+						object.obj = workingVar.val == null ? val : workingVar.val;
 					} else throw new RuntimeException("Cannot use operators on non numbers.");
 					if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number)object.obj).intValue();
-					System.out.println(object.obj);
+//					ystem.out.println(object.obj);
 					continue loopLines;
 				}
 			}

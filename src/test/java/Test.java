@@ -3,29 +3,22 @@ import tfc.java_interpreter.data.InterpretedObject;
 import tfc.java_interpreter.Interpreter;
 import tfc.java_interpreter.data.LangObject;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
 public class Test {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		Interpreter interpreter = new Interpreter();
-		InterpretedClass clazz = interpreter.read("" +
-				"public class TestClass {\n" +
-				"\tpublic final int num = 5 * 4 * 3 * 2 * 1;\n" +
-				"\tpublic final int num1 = 6 * 5 * 4 * 3 * 2 * 1;\n" +
-				"\t\n" +
-				"\tpublic int testMethod() {\n" +
-				"\t\tint val1 = 0;\n" +
-				"\t\tint val = 1;\n" +
-				"\t\tval1 += 5;\n" +
-				"\t\tval *= 5;\n" +
-				"\t\tval /= 2;\n" +
-				"\t\tval1 /= 293 -291;\n" +
-				"\t\tval += 3;\n" +
-				"\t\tval1 *= 5;\n" +
-				"\t\tval -= 530;\n" +
-				"\t\tval1 *= 68;\n" +
-				"\t\treturn val;\n" +
-				"\t}\n" +
-				"}\n" +
-				"");
+		byte[] bytes;
+		{
+			File file = new File("src/test/java/TestClass.java");
+			FileInputStream stream = new FileInputStream(file);
+			bytes = new byte[stream.available()];
+			stream.read(bytes);
+			stream.close();
+		}
+		InterpretedClass clazz = interpreter.read(new String(bytes));
 		System.out.println(clazz);
 		LangObject o = new LangObject();
 		InterpretedObject interpO = new InterpretedObject();
