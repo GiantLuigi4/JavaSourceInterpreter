@@ -38,10 +38,10 @@ dependencies {
 ```java
 		// creates an interpreter instance, so you can interpret your source files
 		Interpreter interpreter = new Interpreter();
-    // sets up default source file getting from a folder called "classes"
+		// sets up default source file getting from a folder called "classes"
 		interpreter.classFileGetter = (name) -> Interpreter.readFile("classes", name);
-    // gets or loads the class "TestClass", in this case, from "classes/TestClass.java", as that's what the default file reader will direct it to
+		// gets or loads the class "TestClass", in this case, from "classes/TestClass.java", as that's what the default file reader will direct it to
 		InterpretedClass clazz = interpreter.getOrLoad("TestClass");
-    // invokes the method "testMethod" with a classless static context for "invoker" and a static context for the class "TestClass" for "invoked" and prints the result of it to the console
+		// invokes the method "testMethod" with a classless static context for "invoker" and a static context for the class "TestClass" for "invoked" and prints the result of it to the console
 		System.out.println(clazz.getMethod("testMethod").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(clazz)));
 ```
