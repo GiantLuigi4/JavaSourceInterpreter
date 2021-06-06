@@ -6,6 +6,7 @@ import com.tfc.bytecode.utils.Parser;
 import com.tfc.bytecode.utils.class_structure.*;
 import tfc.expression_solver.Expression;
 import tfc.expression_solver.ExpressionParser;
+import tfc.java_interpreter.data.InterpretedObject;
 import tfc.java_interpreter.data.LangObject;
 import tfc.java_interpreter.natives.IntegerClass;
 import tfc.java_interpreter.reflections.ReflectionClass;
@@ -13,6 +14,9 @@ import tfc.java_interpreter.structure.InterpretedClass;
 import tfc.java_interpreter.structure.InterpretedField;
 import tfc.java_interpreter.structure.InterpretedMethod;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,6 +42,34 @@ public class Interpreter {
 	}
 	
 	public Function<String, String> classFileGetter = (s) -> null;
+	
+	public LangObject getStaticContext(InterpretedClass clazz) {
+		LangObject o1 = new LangObject();
+		InterpretedObject interp1 = new InterpretedObject();
+		interp1.clazz = clazz;
+		interp1.isStaticContext = true;
+		return o1;
+	}
+	
+	public static String readFile(String path, String name) {
+		FileInputStream stream = null;
+		byte[] bytes = new byte[0];
+		try {
+			File file = new File(path + name.replace(".", "/") + ".java");
+			stream = new FileInputStream(file);
+			bytes = new byte[stream.available()];
+			stream.read(bytes);
+		} catch (IOException err) {
+			err.printStackTrace();
+		}
+		if (stream == null) return null;
+		try {
+			stream.close();
+		} catch (IOException err) {
+			err.printStackTrace();
+		}
+		return new String(bytes);
+	}
 	
 	public InterpretedClass read(String s) {
 		return $getOrLoad(s);
