@@ -64,6 +64,7 @@ public class JavaExpressionMethod extends Value {
 					ArrayList<LangObject> args = new ArrayList<>();
 					ArrayList<InterpretedClass> argsClasses = new ArrayList<>();
 					String argsStr = s.substring(s.indexOf("(") + 1, s.length() - 1);
+					// TODO: make this work properly with strings that have "," as args
 					for (String arg : argsStr.split(",")) {
 						if (locals.containsKey(arg)) {
 							LangObject obj = locals.get(arg);
@@ -73,7 +74,8 @@ public class JavaExpressionMethod extends Value {
 								args.add(object);
 							} else args.add(obj);
 							argsClasses.add(((InterpretedObject) (locals.get(arg).val)).clazz);
-						}
+						} // TODO: static and instance fields
+						// TODO: expressions as args
 					}
 					LangObject[] argsArray = args.toArray(new LangObject[0]);
 					InterpretedClass[] argsClassesArray = argsClasses.toArray(new InterpretedClass[0]);
