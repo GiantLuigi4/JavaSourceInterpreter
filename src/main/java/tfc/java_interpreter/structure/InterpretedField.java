@@ -1,6 +1,8 @@
-package tfc.java_interpreter;
+package tfc.java_interpreter.structure;
 
 import tfc.expression_solver.Expression;
+import tfc.java_interpreter.EnumProtectionLevel;
+import tfc.java_interpreter.data.LangObject;
 
 public class InterpretedField {
 	public LangObject value;

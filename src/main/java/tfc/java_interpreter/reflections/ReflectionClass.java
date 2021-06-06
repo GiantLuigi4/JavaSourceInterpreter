@@ -1,8 +1,8 @@
 package tfc.java_interpreter.reflections;
 
 import tfc.java_interpreter.EnumProtectionLevel;
-import tfc.java_interpreter.InterpretedClass;
-import tfc.java_interpreter.InterpretedMethod;
+import tfc.java_interpreter.structure.InterpretedClass;
+import tfc.java_interpreter.structure.InterpretedMethod;
 
 public class ReflectionClass extends InterpretedClass {
 	public ReflectionClass() {

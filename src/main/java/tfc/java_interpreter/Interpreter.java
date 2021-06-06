@@ -8,6 +8,9 @@ import tfc.expression_solver.Expression;
 import tfc.expression_solver.ExpressionParser;
 import tfc.java_interpreter.natives.IntegerClass;
 import tfc.java_interpreter.reflections.ReflectionClass;
+import tfc.java_interpreter.structure.InterpretedClass;
+import tfc.java_interpreter.structure.InterpretedField;
+import tfc.java_interpreter.structure.InterpretedMethod;
 
 import java.util.ArrayList;
 import java.util.Arrays;

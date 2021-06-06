@@ -1,4 +1,6 @@
-package tfc.java_interpreter;
+package tfc.java_interpreter.structure;
+
+import tfc.java_interpreter.EnumProtectionLevel;
 
 import java.util.HashMap;
 import java.util.Objects;

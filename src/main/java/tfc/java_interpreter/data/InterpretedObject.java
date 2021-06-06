@@ -1,4 +1,6 @@
-package tfc.java_interpreter;
+package tfc.java_interpreter.data;
+
+import tfc.java_interpreter.structure.InterpretedClass;
 
 public class InterpretedObject {
 	public boolean isStaticContext = false;

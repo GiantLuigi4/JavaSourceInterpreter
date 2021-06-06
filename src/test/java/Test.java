@@ -1,7 +1,7 @@
-import tfc.java_interpreter.InterpretedClass;
-import tfc.java_interpreter.InterpretedObject;
+import tfc.java_interpreter.structure.InterpretedClass;
+import tfc.java_interpreter.data.InterpretedObject;
 import tfc.java_interpreter.Interpreter;
-import tfc.java_interpreter.LangObject;
+import tfc.java_interpreter.data.LangObject;
 
 public class Test {
 	public static void main(String[] args) {

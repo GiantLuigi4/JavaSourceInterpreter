@@ -1,7 +1,7 @@
 package tfc.java_interpreter.reflections;
 
 import tfc.java_interpreter.EnumProtectionLevel;
-import tfc.java_interpreter.InterpretedMethod;
+import tfc.java_interpreter.structure.InterpretedMethod;
 
 public class ReflectionMethod extends InterpretedMethod {
 	public ReflectionMethod(boolean isFinal, EnumProtectionLevel protection, String name) {

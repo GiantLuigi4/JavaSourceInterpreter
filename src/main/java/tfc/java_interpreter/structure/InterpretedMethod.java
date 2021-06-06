@@ -1,6 +1,11 @@
-package tfc.java_interpreter;
+package tfc.java_interpreter.structure;
 
 import tfc.expression_solver.Expression;
+import tfc.java_interpreter.EnumProtectionLevel;
+import tfc.java_interpreter.Interpreter;
+import tfc.java_interpreter.data.InterpretedObject;
+import tfc.java_interpreter.data.LangObject;
+import tfc.java_interpreter.data.VoidReturnMarker;
 
 import java.util.ArrayList;
 import java.util.HashMap;
