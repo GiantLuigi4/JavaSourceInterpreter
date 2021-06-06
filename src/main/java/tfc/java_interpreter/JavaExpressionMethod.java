@@ -51,6 +51,7 @@ public class JavaExpressionMethod extends Value {
 	
 	@Override
 	public double get(ExpressionParser parser) {
+		workingVar.val = null;
 		for (String s : methodsCalled) {
 			if (!s.contains("(")) {
 				if (((InterpretedObject) locals.get(s).val).obj instanceof Number) workingVar.val = ((InterpretedObject) locals.get(s).val).obj;
@@ -79,9 +80,10 @@ public class JavaExpressionMethod extends Value {
 					}
 					LangObject[] argsArray = args.toArray(new LangObject[0]);
 					InterpretedClass[] argsClassesArray = argsClasses.toArray(new InterpretedClass[0]);
+					// TODO: make it setup for expression assignment stuff
 					Object o = ((InterpretedObject)invoker.val).clazz.getMethod(
 							s.substring(0, s.indexOf("(")), argsClassesArray
-					).checkAndInvoke(invoker, null, argsArray); // TODO: make this work for non static contexts
+					).checkAndInvoke(invoker, workingVar, argsArray);
 					if (o instanceof LangObject) workingVar.val = ((LangObject)o).val;
 					else workingVar.val = o;
 //					System.out.println(workingVar.val);

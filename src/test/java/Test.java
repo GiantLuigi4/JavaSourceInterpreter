@@ -29,6 +29,11 @@ public class Test {
 		interp1.clazz = clazz;
 		interp1.isStaticContext = true;
 		o1.val = interp1;
+		long start = System.nanoTime();
 		System.out.println(clazz.getMethod("testMethod").invoke(o, o1));
+		System.out.println(Math.abs(start - System.nanoTime()));
+		start = System.nanoTime();
+		TestClass.main(args);
+		System.out.println(Math.abs(start - System.nanoTime()));
 	}
 }
