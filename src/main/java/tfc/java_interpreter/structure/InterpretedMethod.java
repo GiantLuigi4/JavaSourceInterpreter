@@ -53,11 +53,13 @@ public class InterpretedMethod {
 	
 	public Object invoke(LangObject invoker, LangObject invoked, LangObject... args) {
 		HashMap<String, LangObject> locals = new HashMap<>();
+		System.out.println(name);
 		for (int i = 0; i < args.length; i++) locals.put(argNames.get(i), args[i]);
 		loopLines:
 		for (String line : lines) {
-//			System.out.println(line);
+			System.out.println("\t" + line);
 			if (line.startsWith("return")) {
+				System.out.println();
 				if (descArgs.endsWith("V")) return VoidReturnMarker.INSTANCE;
 				LangObject returnVal = new LangObject();
 				String val = line.substring("return".length()).trim();
@@ -117,12 +119,13 @@ public class InterpretedMethod {
 						object.obj = workingVar.val == null ? val : workingVar.val;
 					} else throw new RuntimeException("Cannot use operators on non numbers.");
 					if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number)object.obj).intValue();
-//					ystem.out.println(object.obj);
+//					System.out.println(object.obj);
 					continue loopLines;
 				}
 			}
 		}
-		return null;
+		System.out.println();
+		return VoidReturnMarker.INSTANCE;
 	}
 	
 	protected boolean isAssignment(String line, String localName) {
