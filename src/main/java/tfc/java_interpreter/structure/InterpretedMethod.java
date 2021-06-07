@@ -7,12 +7,14 @@ import tfc.java_interpreter.JavaMethodMarker;
 import tfc.java_interpreter.data.InterpretedObject;
 import tfc.java_interpreter.data.LangObject;
 import tfc.java_interpreter.data.VoidReturnMarker;
+import tfc.utils.logging.LogColors;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
 public class InterpretedMethod {
+	public final InterpretedClass owner;
 	public ArrayList<String> lines = new ArrayList<>();
 	public boolean isFinal;
 	public EnumProtectionLevel protection;
@@ -22,10 +24,32 @@ public class InterpretedMethod {
 	public Interpreter interpreter;
 	public ArrayList<String> argNames = new ArrayList<>();
 	
-	public InterpretedMethod(boolean isFinal, EnumProtectionLevel protection, String name) {
+	protected static int stackDepth = 0;
+	
+	protected static String getVerboseLoggingPrefix() {
+		StringBuilder sb = new StringBuilder(LogColors.TEXT_CYAN);
+		for (int i = 0; i < stackDepth; i++) sb.append("|  ");
+		sb.append(LogColors.TEXT_RESET);
+		return sb.toString();
+	}
+	
+	protected void log(String msg) {
+		if (interpreter.configuration.verboseMethodExecution) System.out.print(msg);
+	}
+	
+	protected void logPrefix(String msg) {
+		if (interpreter.configuration.verboseMethodExecution) System.out.print(getVerboseLoggingPrefix() + msg);
+	}
+	
+	protected void logLinePrefix(String msg) {
+		if (interpreter.configuration.verboseMethodExecution) System.out.println(getVerboseLoggingPrefix() + msg);
+	}
+	
+	public InterpretedMethod(boolean isFinal, EnumProtectionLevel protection, String name, InterpretedClass owner) {
 		this.isFinal = isFinal;
 		this.protection = protection;
 		this.name = name;
+		this.owner = owner;
 	}
 	
 	public Object checkAndInvoke(LangObject invoker, LangObject invoked, LangObject... args) {
@@ -53,27 +77,37 @@ public class InterpretedMethod {
 	
 	public Object invoke(LangObject invoker, LangObject invoked, LangObject... args) {
 		HashMap<String, LangObject> locals = new HashMap<>();
-		System.out.println(name);
+		logLinePrefix(name);
+		stackDepth++;
 		for (int i = 0; i < args.length; i++) locals.put(argNames.get(i), args[i]);
 		loopLines:
 		for (String line : lines) {
-			System.out.println("\t" + line);
+			logLinePrefix(LogColors.TEXT_YELLOW + line + LogColors.TEXT_RESET); // TODO: better colors to mimic basic syntax highlighting
+//			System.out.println("\t" + line); //
 			if (line.startsWith("return")) {
-				System.out.println();
+//				System.out.println(); //
+				stackDepth--;
 				if (descArgs.endsWith("V")) return VoidReturnMarker.INSTANCE;
 				LangObject returnVal = new LangObject();
 				String val = line.substring("return".length()).trim();
-				val = val.substring(0, val.length() -1);
+				val = val.substring(0, val.length() - 1);
 				for (String localName : locals.keySet()) {
 					if (localName.equals(val)) {
-						InterpretedObject object = ((InterpretedObject)(locals.get(localName).val));
+						InterpretedObject object = ((InterpretedObject) (locals.get(localName).val));
 						Object o = object.obj;
 						return o;
 					}
 				}
 				Expression ex = interpreter.parser.parse(val);
-				// TODO: expression assignment related stuff
-				return ex.get();
+				LangObject workingVar = new LangObject();
+				{
+					JavaMethodMarker.locals = locals;
+					JavaMethodMarker.invoker = invoked;
+					JavaMethodMarker.workingVar = workingVar;
+				}
+				double val1 = ex.get();
+				workingVar.val = workingVar.val == null ? val1 : workingVar.val;
+				return workingVar.val;
 			}
 			if (line.startsWith("int ")) {
 				String s = line.substring("int ".length());
@@ -118,13 +152,14 @@ public class InterpretedMethod {
 						double val = interpreter.parser.parse(getAssignmentExpression(line, localName)).get();
 						object.obj = workingVar.val == null ? val : workingVar.val;
 					} else throw new RuntimeException("Cannot use operators on non numbers.");
-					if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number)object.obj).intValue();
+					if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
+					logLinePrefix(LogColors.TEXT_BLACK + "// " + localName + " = " + object.obj + LogColors.TEXT_RESET);
 //					System.out.println(object.obj);
 					continue loopLines;
 				}
 			}
 		}
-		System.out.println();
+		stackDepth--;
 		return VoidReturnMarker.INSTANCE;
 	}
 	

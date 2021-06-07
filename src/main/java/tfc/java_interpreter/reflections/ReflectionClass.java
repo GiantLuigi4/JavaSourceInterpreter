@@ -12,12 +12,13 @@ public class ReflectionClass extends InterpretedClass {
 	private static final ReflectionMethod invoke;
 	
 	static {
-		invoke = new ReflectionMethod(true, EnumProtectionLevel.PRIVATE_FINAL, "invoke");
+		invoke = new ReflectionMethod(true, EnumProtectionLevel.PRIVATE_FINAL, "invoke", null);
 		invoke.isStatic = true;
 	}
 	
 	@Override
 	public InterpretedMethod getMethod(String name) {
+		invoke.interpreter = interpreter;
 		if (name.startsWith("invoke")) return invoke;
 		return super.getMethod(name);
 	}

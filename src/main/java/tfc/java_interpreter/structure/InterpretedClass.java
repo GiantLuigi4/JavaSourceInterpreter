@@ -1,6 +1,7 @@
 package tfc.java_interpreter.structure;
 
 import tfc.java_interpreter.EnumProtectionLevel;
+import tfc.java_interpreter.Interpreter;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -9,6 +10,7 @@ public class InterpretedClass {
 	public boolean isFinal;
 	public EnumProtectionLevel protection;
 	public final String name;
+	public Interpreter interpreter;
 	public HashMap<String, InterpretedMethod> methods = new HashMap<>();
 	public HashMap<String, InterpretedField> fields = new HashMap<>();
 	
