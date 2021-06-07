@@ -2,6 +2,8 @@ public class TestClass {
 	public static final int num = 5 * 4 * 3 * 2 * 1;
 	public static final int num1 = 6 * 5 * 4 * 3 * 2 * 1;
 	
+	public int test = 42;
+	
 	public static void main(String[] args) {
 		System.out.println(testMethod());
 	}
@@ -34,5 +36,15 @@ public class TestClass {
 		val -= 5;
 		val += 64;
 		return val;
+	}
+	
+	public int add(int amt) {
+		test += amt;
+		return test;
+	}
+	
+	public int subtract(int amt) {
+		test += amt;
+		return test;
 	}
 }

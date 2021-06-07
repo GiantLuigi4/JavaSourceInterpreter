@@ -1,6 +1,5 @@
 package tfc.java_interpreter;
 
-import org.codehaus.janino.Java;
 import tfc.expression_solver.ExpressionParser;
 import tfc.expression_solver.values.Value;
 import tfc.java_interpreter.data.InterpretedObject;
@@ -51,11 +50,22 @@ public class JavaExpressionMethod extends Value {
 	
 	@Override
 	public double get(ExpressionParser parser) {
-		workingVar.val = invoker;
+		workingVar.val = invoker.val;
 		for (String s : methodsCalled) {
 			if (!s.contains("(")) {
-				if (((InterpretedObject) locals.get(s).val).obj instanceof Number) workingVar.val = ((InterpretedObject) locals.get(s).val).obj;
-				else workingVar.val = locals.get(s).val;
+				if (locals != null && locals.containsKey(s)) {
+					if (((InterpretedObject) locals.get(s).val).obj instanceof Number)
+						workingVar.val = ((InterpretedObject) locals.get(s).val).obj;
+					else workingVar.val = locals.get(s).val;
+				} else {
+					System.out.println(workingVar);
+					System.out.println(workingVar.val);
+					System.out.println(((InterpretedObject) (workingVar.val)).getField(s));
+					System.out.println(((InterpretedObject) (workingVar.val)).getField(s).val);
+					System.out.println(((InterpretedObject) (((InterpretedObject) (workingVar.val)).getField(s).val)).obj);
+					if (((InterpretedObject) workingVar.val).getField(s) != null)
+						workingVar.val = ((InterpretedObject) workingVar.val).getField(s).val;
+				}
 			} else {
 				if (s.contains(".")) {
 					// TODO: whatever needs to be done here
@@ -80,7 +90,6 @@ public class JavaExpressionMethod extends Value {
 					}
 					LangObject[] argsArray = args.toArray(new LangObject[0]);
 					InterpretedClass[] argsClassesArray = argsClasses.toArray(new InterpretedClass[0]);
-					// TODO: make it setup for expression assignment stuff
 					Object o = ((InterpretedObject)invoker.val).clazz.getMethod(
 							s.substring(0, s.indexOf("(")), argsClassesArray
 					).checkAndInvoke(invoker, workingVar, argsArray);

@@ -55,6 +55,26 @@ public class Interpreter {
 		return o1;
 	}
 	
+	public LangObject box(int val) {
+		LangObject o1 = new LangObject();
+		InterpretedObject interp1 = new InterpretedObject();
+		interp1.clazz = intClass;
+		interp1.isStaticContext = false;
+		interp1.obj = val;
+		o1.val = interp1;
+		return o1;
+	}
+	
+	public LangObject createInstance(InterpretedClass clazz) {
+		LangObject o1 = new LangObject();
+		InterpretedObject interp1 = new InterpretedObject();
+		interp1.clazz = clazz;
+		interp1.isStaticContext = false;
+		o1.val = interp1;
+		// TODO: call default constructor
+		return o1;
+	}
+	
 	public static String readFile(String path, String name) {
 		FileInputStream stream = null;
 		byte[] bytes = new byte[0];

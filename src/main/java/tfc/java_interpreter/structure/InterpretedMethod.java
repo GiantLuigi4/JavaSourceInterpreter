@@ -98,13 +98,13 @@ public class InterpretedMethod {
 						return o;
 					}
 				}
-				Expression ex = interpreter.parser.parse(val);
 				LangObject workingVar = new LangObject();
 				{
 					JavaMethodMarker.locals = locals;
 					JavaMethodMarker.invoker = invoked;
 					JavaMethodMarker.workingVar = workingVar;
 				}
+				Expression ex = interpreter.parser.parse(val);
 				double val1 = ex.get();
 				workingVar.val = workingVar.val == null ? val1 : workingVar.val;
 				return workingVar.val;
@@ -156,6 +156,32 @@ public class InterpretedMethod {
 					logLinePrefix(LogColors.TEXT_BLACK + "// " + localName + " = " + object.obj + LogColors.TEXT_RESET);
 //					System.out.println(object.obj);
 					continue loopLines;
+				}
+			}
+			if (invoked.val != null) {
+				for (String localName : ((InterpretedObject) invoked.val).getFields().keySet()) {
+					if (isAssignment(line, localName)) {
+						String operator = getAssignmentOperator(line, localName);
+						InterpretedObject object = (InterpretedObject) (((InterpretedObject) invoked.val).getField(localName)).val;
+						Object o = object.obj;
+						LangObject workingVar = new LangObject();
+						{
+							JavaMethodMarker.locals = locals;
+							JavaMethodMarker.invoker = invoked;
+							JavaMethodMarker.workingVar = workingVar;
+						}
+						if (o instanceof Number && operator.charAt(0) != '=') {
+							object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, localName)));
+						} else if (operator.equals("=")) {
+							double val = interpreter.parser.parse(getAssignmentExpression(line, localName)).get();
+							object.obj = workingVar.val == null ? val : workingVar.val;
+						} else
+							throw new RuntimeException("Cannot use operators on non numbers.");
+						if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
+						logLinePrefix(LogColors.TEXT_BLACK + "// " + localName + " = " + object.obj + LogColors.TEXT_RESET);
+//					System.out.println(object.obj);
+						continue loopLines;
+					}
 				}
 			}
 		}

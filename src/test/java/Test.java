@@ -1,4 +1,6 @@
 import tfc.java_interpreter.Interpreter;
+import tfc.java_interpreter.data.InterpretedObject;
+import tfc.java_interpreter.data.LangObject;
 import tfc.java_interpreter.structure.InterpretedClass;
 
 import java.io.File;
@@ -27,5 +29,10 @@ public class Test {
 		start = System.nanoTime();
 		TestClass.main(args);
 		System.out.println(Math.abs(start - System.nanoTime()));
+		
+		LangObject obj = interpreter.createInstance(clazz);
+		System.out.println(((InterpretedObject) (((InterpretedObject) obj.val).getField("test").val)).obj);
+		System.out.println(((InterpretedObject) (clazz.getMethod("add").invoke(interpreter.getStaticContext(null), obj, interpreter.box(4)))).obj);
+		System.out.println(((InterpretedObject) (clazz.getMethod("add").invoke(interpreter.getStaticContext(null), obj, interpreter.box(-6)))).obj);
 	}
 }
