@@ -19,6 +19,33 @@ public class Test1 {
 		return test1.num;
 	}
 	
+	private static final int i1 = 1;
+	
+	public static int codeBlocks() {
+		int i = 5;
+		{
+			int i1 = 5;
+			i += i1;
+		}
+		{
+			int i1 = 4;
+			i += i1;
+		}
+		{
+			int i1 = 4;
+			{
+				int i2 = 5;
+				int i3 = i2 + 5;
+				i3 += 1;
+				i = i1 + i;
+				i += i3;
+				i += i3;
+			}
+		}
+		i += i1;
+		return i;
+	}
+	
 	public static void main(String[] args) {
 		{
 			Interpreter interpreter = new Interpreter();
@@ -36,9 +63,11 @@ public class Test1 {
 			obj2.val = interpreter.createInstance(test2);
 			
 			System.out.println((iobj.clazz.getMethod("doThing").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(test1))));
+			System.out.println((iobj.clazz.getMethod("codeBlocks").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(test1))));
 		}
 		test = new Test2();
 		test1 = new Test2();
+		System.out.println(codeBlocks());
 		System.out.println(doThing());
 	}
 }
