@@ -130,15 +130,47 @@ public class InterpretedMethod {
 				((InterpretedObject)obj.val).isStaticContext = false;
 				((InterpretedObject) obj.val).clazz = interpreter.intClass;
 				if (!ex.toString().equals("")) {
+					LangObject workingVar = new LangObject();
+					{
+						JavaMethodMarker.locals = locals;
+						JavaMethodMarker.invoker = invoked;
+						JavaMethodMarker.workingVar = workingVar;
+					}
 					Expression expression = interpreter.parser.parse(ex.toString());
 					((InterpretedObject) obj.val).obj = expression.get();
 				}
 				continue;
 			}
-			for (String localName : locals.keySet()) {
-				if (isAssignment(line, localName)) {
-					String operator = getAssignmentOperator(line, localName);
-					InterpretedObject object = ((InterpretedObject)(locals.get(localName).val));
+			LangObject obj = getObject(locals, line);
+			if (obj != null) {
+				String objStr = getObjectStr(locals, line);
+				String operator = getAssignmentOperator(line, objStr);
+				InterpretedObject object = ((InterpretedObject) obj.val);
+				Object o = object.obj;
+				LangObject workingVar = new LangObject();
+				{
+					JavaMethodMarker.locals = locals;
+					JavaMethodMarker.invoker = invoked;
+					JavaMethodMarker.workingVar = workingVar;
+				}
+				if (o instanceof Number && operator.charAt(0) != '=') {
+					object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, objStr)));
+				} else if (operator.equals("=")) {
+					double val = interpreter.parser.parse(getAssignmentExpression(line, objStr)).get();
+					object.obj = workingVar.val == null ? val : workingVar.val;
+				} else throw new RuntimeException("Cannot use operators on non numbers.");
+				if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
+				logLinePrefix(LogColors.TEXT_BLACK + "// " + objStr + " = " + object.obj + LogColors.TEXT_RESET);
+//				System.out.println(object.obj);
+				continue;
+			}
+			if (invoked.val != null) {
+				HashMap<String, LangObject> fields = ((InterpretedObject) invoked.val).getFields();
+				obj = getObject(fields, line);
+				if (obj != null) {
+					String objStr = getObjectStr(fields, line);
+					String operator = getAssignmentOperator(line, objStr);
+					InterpretedObject object = ((InterpretedObject) obj.val);
 					Object o = object.obj;
 					LangObject workingVar = new LangObject();
 					{
@@ -147,46 +179,94 @@ public class InterpretedMethod {
 						JavaMethodMarker.workingVar = workingVar;
 					}
 					if (o instanceof Number && operator.charAt(0) != '=') {
-						object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, localName)));
+						object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, objStr)));
 					} else if (operator.equals("=")) {
-						double val = interpreter.parser.parse(getAssignmentExpression(line, localName)).get();
+						double val = interpreter.parser.parse(getAssignmentExpression(line, objStr)).get();
 						object.obj = workingVar.val == null ? val : workingVar.val;
 					} else throw new RuntimeException("Cannot use operators on non numbers.");
 					if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
-					logLinePrefix(LogColors.TEXT_BLACK + "// " + localName + " = " + object.obj + LogColors.TEXT_RESET);
+					logLinePrefix(LogColors.TEXT_BLACK + "// " + objStr + " = " + object.obj + LogColors.TEXT_RESET);
 //					System.out.println(object.obj);
-					continue loopLines;
+					continue;
 				}
 			}
-			if (invoked.val != null) {
-				for (String localName : ((InterpretedObject) invoked.val).getFields().keySet()) {
-					if (isAssignment(line, localName)) {
-						String operator = getAssignmentOperator(line, localName);
-						InterpretedObject object = (InterpretedObject) (((InterpretedObject) invoked.val).getField(localName)).val;
-						Object o = object.obj;
-						LangObject workingVar = new LangObject();
-						{
-							JavaMethodMarker.locals = locals;
-							JavaMethodMarker.invoker = invoked;
-							JavaMethodMarker.workingVar = workingVar;
-						}
-						if (o instanceof Number && operator.charAt(0) != '=') {
-							object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, localName)));
-						} else if (operator.equals("=")) {
-							double val = interpreter.parser.parse(getAssignmentExpression(line, localName)).get();
-							object.obj = workingVar.val == null ? val : workingVar.val;
-						} else
-							throw new RuntimeException("Cannot use operators on non numbers.");
-						if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
-						logLinePrefix(LogColors.TEXT_BLACK + "// " + localName + " = " + object.obj + LogColors.TEXT_RESET);
-//					System.out.println(object.obj);
-						continue loopLines;
-					}
-				}
-			}
+//			for (String localName : locals.keySet()) {
+//				if (isAssignment(line, localName)) {
+//					String operator = getAssignmentOperator(line, localName);
+//					InterpretedObject object = ((InterpretedObject)(locals.get(localName).val));
+//					Object o = object.obj;
+//					LangObject workingVar = new LangObject();
+//					{
+//						JavaMethodMarker.locals = locals;
+//						JavaMethodMarker.invoker = invoked;
+//						JavaMethodMarker.workingVar = workingVar;
+//					}
+//					if (o instanceof Number && operator.charAt(0) != '=') {
+//						object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, localName)));
+//					} else if (operator.equals("=")) {
+//						double val = interpreter.parser.parse(getAssignmentExpression(line, localName)).get();
+//						object.obj = workingVar.val == null ? val : workingVar.val;
+//					} else throw new RuntimeException("Cannot use operators on non numbers.");
+//					if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
+//					logLinePrefix(LogColors.TEXT_BLACK + "// " + localName + " = " + object.obj + LogColors.TEXT_RESET);
+////					System.out.println(object.obj);
+//					continue loopLines;
+//				}
+//			}
+//			getObject(((InterpretedObject) invoked.val).getFields(), line);
+//			if (invoked.val != null) {
+//				for (String localName : ((InterpretedObject) invoked.val).getFields().keySet()) {
+//					if (isAssignment(line, localName)) {
+//						String operator = getAssignmentOperator(line, localName);
+//						InterpretedObject object = (InterpretedObject) (((InterpretedObject) invoked.val).getField(localName)).val;
+//						Object o = object.obj;
+//						LangObject workingVar = new LangObject();
+//						{
+//							JavaMethodMarker.locals = locals;
+//							JavaMethodMarker.invoker = invoked;
+//							JavaMethodMarker.workingVar = workingVar;
+//						}
+//						if (o instanceof Number && operator.charAt(0) != '=') {
+//							object.obj = doOperator(((Number) o).doubleValue(), operator.charAt(0), interpreter.parser.parse(getAssignmentExpression(line, localName)));
+//						} else if (operator.equals("=")) {
+//							double val = interpreter.parser.parse(getAssignmentExpression(line, localName)).get();
+//							object.obj = workingVar.val == null ? val : workingVar.val;
+//						} else
+//							throw new RuntimeException("Cannot use operators on non numbers.");
+//						if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
+//						logLinePrefix(LogColors.TEXT_BLACK + "// " + localName + " = " + object.obj + LogColors.TEXT_RESET);
+////					System.out.println(object.obj);
+//						continue loopLines;
+//					}
+//				}
+//			}
 		}
 		stackDepth--;
 		return VoidReturnMarker.INSTANCE;
+	}
+	
+	public LangObject getObject(HashMap<String, LangObject> locals, String line) {
+		for (String typeName : locals.keySet()) {
+			if (!line.startsWith(typeName)) continue;
+			boolean isCorrect = line.substring(typeName.length()).startsWith(".");
+			if (!isCorrect && !line.substring(typeName.length()).startsWith(" ")) continue;
+			if (isCorrect)
+				return getObject(((InterpretedObject) locals.get(typeName).val).getFields(), line.substring(typeName.length() + 1));
+			else return locals.get(typeName);
+		}
+		return null;
+	}
+	
+	public String getObjectStr(HashMap<String, LangObject> locals, String line) {
+		for (String typeName : locals.keySet()) {
+			if (!line.startsWith(typeName)) continue;
+			boolean isCorrect = line.substring(typeName.length()).startsWith(".");
+			if (!isCorrect && !line.substring(typeName.length()).startsWith(" ")) continue;
+			if (isCorrect)
+				return line.substring(0, typeName.length()) + "." + getObjectStr(((InterpretedObject) locals.get(typeName).val).getFields(), line.substring(typeName.length() + 1));
+			else return line.substring(0, typeName.length());
+		}
+		return null;
 	}
 	
 	protected boolean isAssignment(String line, String localName) {

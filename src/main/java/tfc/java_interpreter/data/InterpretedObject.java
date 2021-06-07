@@ -5,7 +5,6 @@ import tfc.java_interpreter.java_linkage.IWrapperClass;
 import tfc.java_interpreter.structure.InterpretedClass;
 
 import java.util.HashMap;
-import java.util.Map;
 
 public class InterpretedObject {
 	public boolean isStaticContext = false;
@@ -48,7 +47,7 @@ public class InterpretedObject {
 		return fields.get(name);
 	}
 	
-	public Map<String, LangObject> getFields() {
+	public HashMap<String, LangObject> getFields() {
 		for (String s : clazz.fields.keySet()) {
 			if (fields.containsKey(s)) continue;
 			getField(s);

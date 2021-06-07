@@ -7,6 +7,7 @@ import tfc.java_interpreter.data.LangObject;
 import tfc.java_interpreter.structure.InterpretedClass;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class JavaExpressionMethod extends Value {
@@ -33,12 +34,13 @@ public class JavaExpressionMethod extends Value {
 				isEscaped = false;
 			}
 			if (unclosedParens == 0 && c == ')') {
-				methodsCalled.add(methodCall.toString());
+				// TODO: make this work for methods which use "."s in strings
+				methodsCalled.addAll(Arrays.asList(methodCall.toString().split("\\.")));
 				methodCall = new StringBuilder();
 			}
 		}
 		if (methodCall.length() == 0) return;
-		methodsCalled.add(methodCall.toString());
+		methodsCalled.addAll(Arrays.asList(methodCall.toString().split("\\.")));
 	}
 	
 	public JavaExpressionMethod(ArrayList<String> methodsCalled) {
@@ -50,6 +52,18 @@ public class JavaExpressionMethod extends Value {
 	
 	@Override
 	public double get(ExpressionParser parser) {
+		locals = locals == null ? new HashMap<>() : new HashMap<>(locals);
+		{
+			LangObject nullO = new LangObject();
+			InterpretedObject obj = new InterpretedObject();
+			obj.clazz = null;
+			obj.fields = null;
+			obj.obj = null;
+			obj.isStaticContext = false;
+			obj.wrapper = null;
+			nullO.val = obj;
+			locals.put("null", nullO);
+		}
 		workingVar.val = invoker.val;
 		for (String s : methodsCalled) {
 			if (!s.contains("(")) {
@@ -58,13 +72,24 @@ public class JavaExpressionMethod extends Value {
 						workingVar.val = ((InterpretedObject) locals.get(s).val).obj;
 					else workingVar.val = locals.get(s).val;
 				} else {
-					System.out.println(workingVar);
-					System.out.println(workingVar.val);
-					System.out.println(((InterpretedObject) (workingVar.val)).getField(s));
-					System.out.println(((InterpretedObject) (workingVar.val)).getField(s).val);
-					System.out.println(((InterpretedObject) (((InterpretedObject) (workingVar.val)).getField(s).val)).obj);
+//					System.out.println(workingVar);
+//					System.out.println(workingVar.val);
+//					System.out.println(((InterpretedObject) (workingVar.val)).getField(s));
+//					System.out.println(((InterpretedObject) (workingVar.val)).getField(s).val);
+//					System.out.println(((InterpretedObject) (((InterpretedObject) (workingVar.val)).getField(s).val)).obj);
 					if (((InterpretedObject) workingVar.val).getField(s) != null)
 						workingVar.val = ((InterpretedObject) workingVar.val).getField(s).val;
+//					System.out.println(((InterpretedObject)workingVar.val).obj);
+//					System.out.println(((InterpretedObject)workingVar.val).clazz);
+//					System.out.println(((InterpretedObject)workingVar.val).clazz == null);
+//					System.out.println(((InterpretedObject) workingVar.val).obj instanceof Number);
+//					System.out.println(((InterpretedObject)workingVar.val).clazz.interpreter);
+//					System.out.println(((InterpretedObject)workingVar.val).clazz.interpreter.intClass);
+//					System.out.println(((InterpretedObject)workingVar.val).clazz == ((InterpretedObject) workingVar.val).clazz.interpreter.intClass);
+					if (
+//							(((InterpretedObject)workingVar.val).clazz == null && ((InterpretedObject) workingVar.val).obj instanceof Number) ||
+							((InterpretedObject) workingVar.val).clazz == ((InterpretedObject) workingVar.val).clazz.interpreter.intClass
+					) workingVar.val = ((InterpretedObject) workingVar.val).obj;
 				}
 			} else {
 				if (s.contains(".")) {
@@ -77,7 +102,7 @@ public class JavaExpressionMethod extends Value {
 					String argsStr = s.substring(s.indexOf("(") + 1, s.length() - 1);
 					// TODO: make this work properly with strings that have "," as args
 					for (String arg : argsStr.split(",")) {
-						if (locals.containsKey(arg)) {
+						if (locals != null && locals.containsKey(arg)) {
 							LangObject obj = locals.get(arg);
 							if (obj.val instanceof InterpretedObject) {
 								LangObject object = new LangObject();

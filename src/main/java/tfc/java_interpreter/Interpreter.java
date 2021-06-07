@@ -35,6 +35,7 @@ public class Interpreter {
 		InterpretedClass interpretedClass = new IntegerClass();
 		classes.put(interpretedClass.name, interpretedClass);
 		intClass = interpretedClass;
+		intClass.interpreter = this;
 	}
 	
 	public static Interpreter createWithReflection() {
@@ -118,35 +119,11 @@ public class Interpreter {
 		if (classes.containsKey(n.name)) return classes.get(n.name);
 		String access = Access.parseAccess(n.modifs);
 		if (configuration.verboseClassLoading)
-			System.out.println(LogColors.TEXT_CYAN + "  access: " + LogColors.TEXT_BLUE + access + LogColors.TEXT_RESET);
+			System.out.println(LogColors.TEXT_CYAN + "  access: " + LogColors.TEXT_BLUE + access.trim() + LogColors.TEXT_RESET);
 		InterpretedClass clazz = new InterpretedClass(access.contains("final"), EnumProtectionLevel.get(access), n.name);
 //		System.out.println(clazz.toString());
 		classes.put(clazz.name, clazz);
 		clazz.interpreter = this;
-		if (configuration.verboseClassLoading)
-			System.out.println(LogColors.TEXT_GREEN + "  fields:" + LogColors.TEXT_RESET);
-		for (FieldNodeSource field : n.fields) {
-			FieldNode node = new FieldNode(field);
-			Expression expression = parser.parse(field.code.substring((Access.parseAccess(node.access) + " " + field.getType() + node.name).length() + 3));
-			expression = configuration.expressionOptimizations.optimize(expression);
-			access = Access.parseAccess(node.access);
-			InterpretedField field1 = new InterpretedField(access.contains("final"), EnumProtectionLevel.get(access), getOrLoad(field.getType()));
-			field1.defaultExpression = expression;
-			field1.isStatic = access.contains("static");
-			LangObject workingVar = new LangObject();
-			{
-				JavaMethodMarker.locals = null;
-				JavaMethodMarker.workingVar = workingVar;
-			}
-			double d = expression.get();
-			if (configuration.verboseClassLoading) {
-				System.out.println(LogColors.TEXT_PURPLE + "    " + field.getType() + " : " + LogColors.TEXT_BLUE + field.getName());
-				System.out.println(LogColors.TEXT_CYAN + "      default: " + LogColors.TEXT_BLUE + expression + " = " + LogColors.TEXT_PURPLE + d);
-				System.out.println(LogColors.TEXT_CYAN + "      access: " + LogColors.TEXT_BLUE + access);
-				System.out.println(LogColors.TEXT_CYAN + "      static: " + LogColors.TEXT_BLUE + field1.isStatic + LogColors.TEXT_RESET);
-			}
-			clazz.fields.put(field1.name = field.getName(), field1);
-		}
 		if (configuration.verboseClassLoading)
 			System.out.println(LogColors.TEXT_GREEN + "  methods:" + LogColors.TEXT_RESET);
 		for (MethodNodeSource method : n.methods) {
@@ -158,22 +135,53 @@ public class Interpreter {
 			String args = method.code.substring(method.code.indexOf(method.getName() + "(") + (method.getName().length()));
 			args = args.substring(1, args.indexOf(")")).trim();
 			String[] lines = method.code.split("\n");
+			m.isStatic = access.contains("static");
 			m.lines = new ArrayList<>(Arrays.asList(lines).subList(1, lines.length - 1));
 			if (configuration.verboseClassLoading) {
 				System.out.println(LogColors.TEXT_BLUE + "    " + m.name + " : " + LogColors.TEXT_PURPLE + m.lines.size());
-				System.out.println(LogColors.TEXT_CYAN + "      access: " + LogColors.TEXT_BLUE + access);
+				System.out.println(LogColors.TEXT_CYAN + "      access: " + LogColors.TEXT_BLUE + access.trim());
 				System.out.println(LogColors.TEXT_CYAN + "      static: " + LogColors.TEXT_BLUE + m.isStatic + LogColors.TEXT_RESET);
 			}
 			if (args.length() != 0) {
 				if (configuration.verboseClassLoading) System.out.println(LogColors.TEXT_GREEN + "      args:");
 				for (String s : args.split(", ")) {
 					String[] parts = s.split(" ");
-					System.out.println(LogColors.TEXT_PURPLE + "        " + parts[0] + " : " + LogColors.TEXT_BLUE + parts[1] + LogColors.TEXT_RESET);
+					if (configuration.verboseClassLoading)
+						System.out.println(LogColors.TEXT_PURPLE + "        " + parts[0] + " : " + LogColors.TEXT_BLUE + parts[1] + LogColors.TEXT_RESET);
 					m.argNames.add(parts[1]);
 				}
 			}
 			clazz.methods.put(method.getName(), m);
 		}
+		if (configuration.verboseClassLoading)
+			System.out.println(LogColors.TEXT_GREEN + "  fields:" + LogColors.TEXT_RESET);
+		for (FieldNodeSource field : n.fields) {
+			FieldNode node = new FieldNode(field);
+//			System.out.println(field.getType().split(" ")[0]);
+//			System.out.println(Access.parseAccess(node.access) + field.getType().split(" ")[0] + " " + node.name);
+			access = Access.parseAccess(node.access);
+			InterpretedField field1 = new InterpretedField(access.contains("final"), EnumProtectionLevel.get(access), getOrLoad(field.getType()));
+			field1.isStatic = access.contains("static");
+			LangObject workingVar = new LangObject();
+			{
+				JavaMethodMarker.locals = null;
+				JavaMethodMarker.invoker = getStaticContext(clazz);
+				JavaMethodMarker.workingVar = workingVar;
+			}
+			String s = field.code.substring((Access.parseAccess(node.access) + " " + field.getType().split(" ")[0] + node.name).length() + 3);
+			Expression expression = parser.parse(s.substring(0, s.length() - 1));
+			expression = configuration.expressionOptimizations.optimize(expression);
+			field1.defaultExpression = expression;
+			double d = expression.get();
+			if (configuration.verboseClassLoading) {
+				System.out.println(LogColors.TEXT_PURPLE + "    " + field.getType() + " : " + LogColors.TEXT_BLUE + field.getName());
+				System.out.println(LogColors.TEXT_CYAN + "      default: " + LogColors.TEXT_BLUE + expression + " = " + LogColors.TEXT_PURPLE + d);
+				System.out.println(LogColors.TEXT_CYAN + "      access: " + LogColors.TEXT_BLUE + access.trim());
+				System.out.println(LogColors.TEXT_CYAN + "      static: " + LogColors.TEXT_BLUE + field1.isStatic + LogColors.TEXT_RESET);
+			}
+			clazz.fields.put(field1.name = field.getName(), field1);
+		}
+		System.out.println(LogColors.TEXT_CYAN + "finished loading class: " + LogColors.TEXT_BLUE + n.name + LogColors.TEXT_RESET);
 		return clazz;
 	}
 }
