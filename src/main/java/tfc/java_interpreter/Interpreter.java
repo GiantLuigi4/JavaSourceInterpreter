@@ -9,7 +9,7 @@ import tfc.expression_solver.ExpressionParser;
 import tfc.java_interpreter.configuration.InterpreterConfiguration;
 import tfc.java_interpreter.data.InterpretedObject;
 import tfc.java_interpreter.data.LangObject;
-import tfc.java_interpreter.natives.IntegerClass;
+import tfc.java_interpreter.natives.numbers.*;
 import tfc.java_interpreter.reflections.ReflectionClass;
 import tfc.java_interpreter.structure.InterpretedClass;
 import tfc.java_interpreter.structure.InterpretedField;
@@ -27,15 +27,36 @@ import java.util.function.Function;
 public class Interpreter {
 	public final ExpressionParser parser = new ExpressionParser();
 	public final HashMap<String, InterpretedClass> classes = new HashMap<>();
-	public final InterpretedClass intClass;
+	
+	public final IntegerClass intClass;
+	public final DoubleClass doubleClass;
+	public final FloatClass floatClass;
+	public final LongClass longClass;
+	public final BooleanClass booleanClass;
+	public final ShortClass shortClass;
+	
 	public final InterpreterConfiguration configuration = new InterpreterConfiguration();
+	
+	public InterpretedClass[] nativeTypes() {
+		return new InterpretedClass[]{
+				intClass, doubleClass, floatClass, longClass, booleanClass, shortClass
+		};
+	}
 	
 	public Interpreter() {
 		parser.methods.add(new JavaMethodMarker());
-		InterpretedClass interpretedClass = new IntegerClass();
-		classes.put(interpretedClass.name, interpretedClass);
-		intClass = interpretedClass;
-		intClass.interpreter = this;
+		intClass = registerNativeClass(new IntegerClass());
+		doubleClass = registerNativeClass(new DoubleClass());
+		floatClass = registerNativeClass(new FloatClass());
+		longClass = registerNativeClass(new LongClass());
+		booleanClass = registerNativeClass(new BooleanClass());
+		shortClass = registerNativeClass(new ShortClass());
+	}
+	
+	private <T extends InterpretedClass> T registerNativeClass(T clazz) {
+		classes.put(clazz.name, clazz);
+		clazz.interpreter = this;
+		return clazz;
 	}
 	
 	public static Interpreter createWithReflection() {
@@ -199,5 +220,24 @@ public class Interpreter {
 		}
 		System.out.println(LogColors.TEXT_CYAN + "finished loading class: " + LogColors.TEXT_BLUE + n.name + LogColors.TEXT_RESET);
 		return clazz;
+	}
+	
+	public Object run(InterpretedClass clazz, String name, Object... args) {
+		LangObject[] objects = new LangObject[args.length];
+		InterpretedClass[] classes = new InterpretedClass[args.length];
+		for (int i = 0; i < args.length; i++) {
+			LangObject o = createInstance(getOrLoad(objects[i].getClass().getName().replace("/", ".")));
+			((InterpretedObject) o.val).obj = args[i];
+			classes[i] = ((InterpretedObject) o.val).clazz;
+		}
+		InterpretedMethod method = clazz.getMethod(name, classes);
+		Object o = method.invoke(getStaticContext(null), getStaticContext(clazz), objects);
+		return unbox(o);
+	}
+	
+	public static Object unbox(Object o) {
+		if (o instanceof LangObject) return unbox(((LangObject) o).val);
+		else if (o instanceof InterpretedObject) return unbox(((InterpretedObject) o).obj);
+		else return o;
 	}
 }

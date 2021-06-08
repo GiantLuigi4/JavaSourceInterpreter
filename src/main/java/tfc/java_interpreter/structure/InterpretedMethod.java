@@ -126,39 +126,42 @@ public class InterpretedMethod {
 				workingVar.val = workingVar.val == null ? val1 : workingVar.val;
 				return workingVar.val;
 			}
-			if (line.startsWith("int ")) {
-				String s = line.substring("int ".length());
-				String[] parts = s.split(" ");
-				String name = "";
-				StringBuilder ex = new StringBuilder();
-				for (int i = 0; i < parts.length; i++) {
-					if (i == 0) {
-						name = parts[i];
-						LangObject obj = new LangObject();
-						obj.yeetMarker = codeBlockDepth;
-						locals.put(name, obj);
-					} else if (i == 1) {
-						if (!Objects.equals(parts[i], "=")) throw new RuntimeException(new IllegalArgumentException(name + ":" + line)); // TODO: descriptions of exceptions
-					} else {
-						ex.append(parts[i]).append(" ");
+			for (InterpretedClass interpretedClass : interpreter.nativeTypes()) {
+				if (line.startsWith(interpretedClass.name + " ")) {
+					String s = line.substring((interpretedClass.name + " ").length());
+					String[] parts = s.split(" ");
+					String name = "";
+					StringBuilder ex = new StringBuilder();
+					for (int i = 0; i < parts.length; i++) {
+						if (i == 0) {
+							name = parts[i];
+							LangObject obj = new LangObject();
+							obj.yeetMarker = codeBlockDepth;
+							locals.put(name, obj);
+						} else if (i == 1) {
+							if (!Objects.equals(parts[i], "="))
+								throw new RuntimeException(new IllegalArgumentException(name + ":" + line)); // TODO: descriptions of exceptions
+						} else {
+							ex.append(parts[i]).append(" ");
+						}
 					}
-				}
-				ex = new StringBuilder(ex.substring(0, ex.length()-2));
-				LangObject obj = locals.get(name);
-				obj.val = new InterpretedObject();
-				((InterpretedObject)obj.val).isStaticContext = false;
-				((InterpretedObject) obj.val).clazz = interpreter.intClass;
-				if (!ex.toString().equals("")) {
-					LangObject workingVar = new LangObject();
-					{
-						JavaMethodMarker.locals = locals;
-						JavaMethodMarker.invoker = invoked;
-						JavaMethodMarker.workingVar = workingVar;
+					ex = new StringBuilder(ex.substring(0, ex.length() - 2));
+					LangObject obj = locals.get(name);
+					obj.val = new InterpretedObject();
+					((InterpretedObject) obj.val).isStaticContext = false;
+					((InterpretedObject) obj.val).clazz = interpretedClass;
+					if (!ex.toString().equals("")) {
+						LangObject workingVar = new LangObject();
+						{
+							JavaMethodMarker.locals = locals;
+							JavaMethodMarker.invoker = invoked;
+							JavaMethodMarker.workingVar = workingVar;
+						}
+						Expression expression = interpreter.parser.parse(ex.toString());
+						((InterpretedObject) obj.val).obj = expression.get();
 					}
-					Expression expression = interpreter.parser.parse(ex.toString());
-					((InterpretedObject) obj.val).obj = expression.get();
+					continue;
 				}
-				continue;
 			}
 			LangObject obj = getObject(locals, line);
 			if (obj != null) {
@@ -178,7 +181,8 @@ public class InterpretedMethod {
 					double val = interpreter.parser.parse(getAssignmentExpression(line, objStr)).get();
 					object.obj = workingVar.val == null ? val : workingVar.val;
 				} else throw new RuntimeException("Cannot use operators on non numbers.");
-				if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
+//				object.obj = NumberClasses.cast(object, object.clazz);
+//				if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
 				logLinePrefix(LogColors.TEXT_WHITE + "// " + objStr + " = " + object.obj + LogColors.TEXT_RESET);
 //				System.out.println(object.obj);
 				continue;
@@ -204,6 +208,7 @@ public class InterpretedMethod {
 						object.obj = workingVar.val == null ? val : workingVar.val;
 					} else throw new RuntimeException("Cannot use operators on non numbers.");
 					if (object.clazz.equals(interpreter.intClass)) object.obj = ((Number) object.obj).intValue();
+//					if (((InterpretedObject) obj.val).obj instanceof Number) ((InterpretedObject) obj.val).obj = NumberClasses.cast(object, ((InterpretedObject) obj.val).clazz);
 					logLinePrefix(LogColors.TEXT_BLACK + "// " + objStr + " = " + object.obj + LogColors.TEXT_RESET);
 //					System.out.println(object.obj);
 					continue;

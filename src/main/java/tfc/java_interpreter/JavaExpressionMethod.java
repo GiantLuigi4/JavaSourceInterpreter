@@ -4,6 +4,7 @@ import tfc.expression_solver.ExpressionParser;
 import tfc.expression_solver.values.Value;
 import tfc.java_interpreter.data.InterpretedObject;
 import tfc.java_interpreter.data.LangObject;
+import tfc.java_interpreter.natives.NumberClasses;
 import tfc.java_interpreter.structure.InterpretedClass;
 
 import java.util.ArrayList;
@@ -87,10 +88,23 @@ public class JavaExpressionMethod extends Value {
 //					System.out.println(((InterpretedObject)workingVar.val).clazz.interpreter);
 //					System.out.println(((InterpretedObject)workingVar.val).clazz.interpreter.intClass);
 //					System.out.println(((InterpretedObject)workingVar.val).clazz == ((InterpretedObject) workingVar.val).clazz.interpreter.intClass);
-					if (
-//							(((InterpretedObject)workingVar.val).clazz == null && ((InterpretedObject) workingVar.val).obj instanceof Number) ||
-							((InterpretedObject) workingVar.val).clazz == ((InterpretedObject) workingVar.val).clazz.interpreter.intClass
-					) workingVar.val = ((InterpretedObject) workingVar.val).obj;
+//					if (
+////							(((InterpretedObject)workingVar.val).clazz == null && ((InterpretedObject) workingVar.val).obj instanceof Number) ||
+//							((InterpretedObject) workingVar.val).obj instanceof Number
+//					) {
+					Object o = ((InterpretedObject) workingVar.val).obj;
+					Interpreter interpreter = ((InterpretedObject) workingVar.val).clazz.interpreter;
+					HashMap<String, LangObject> fields = ((InterpretedObject) workingVar.val).fields;
+					if (o instanceof Number) {
+						Number n = (Number) ((InterpretedObject) workingVar.val).obj;
+						workingVar.val = interpreter.createInstance(interpreter.getOrLoad(NumberClasses.getClassName(n))).val;
+						((InterpretedObject) workingVar.val).obj = n;
+					} else {
+						workingVar.val = interpreter.createInstance(interpreter.getOrLoad(o.getClass().getName().replace("/", "."))).val;
+						((InterpretedObject) workingVar.val).obj = o;
+					}
+					((InterpretedObject) workingVar.val).fields = fields;
+//					}
 				}
 			} else {
 				if (s.contains(".")) {
@@ -116,16 +130,16 @@ public class JavaExpressionMethod extends Value {
 					}
 					LangObject[] argsArray = args.toArray(new LangObject[0]);
 					InterpretedClass[] argsClassesArray = argsClasses.toArray(new InterpretedClass[0]);
-					Object o = ((InterpretedObject)invoker.val).clazz.getMethod(
+					Object o = ((InterpretedObject) invoker.val).clazz.getMethod(
 							s.substring(0, s.indexOf("(")), argsClassesArray
 					).checkAndInvoke(invoker, workingVar, argsArray);
-					if (o instanceof LangObject) workingVar.val = ((LangObject)o).val;
+					if (o instanceof LangObject) workingVar.val = ((LangObject) o).val;
 					else workingVar.val = o;
 //					System.out.println(workingVar.val);
 				}
 			}
 		}
-		double out = workingVar.val instanceof Number ? ((Number) workingVar.val).doubleValue() : Double.NaN;
+		double out = Interpreter.unbox(workingVar) instanceof Number ? ((Number) Interpreter.unbox(workingVar)).doubleValue() : Double.NaN;
 		if (workingVar.val instanceof Number) workingVar.val = null;
 		return out;
 	}

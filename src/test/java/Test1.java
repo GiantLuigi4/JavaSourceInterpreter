@@ -66,12 +66,12 @@ public class Test1 {
 			
 			boolean passes = true;
 			
-			double val = (double) iobj.clazz.getMethod("doThing").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(test1));
+			double val = ((Number) interpreter.run(iobj.clazz, "doThing")).doubleValue();
 			System.out.println(val);
 			int v2 = doThing();
 			System.out.println(v2);
 			passes = passes && v2 == val;
-			val = (Integer) iobj.clazz.getMethod("codeBlocks").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(test1));
+			val = ((Number) interpreter.run(iobj.clazz, "codeBlocks")).doubleValue();
 			System.out.println(val);
 			v2 = codeBlocks();
 			System.out.println(v2);
