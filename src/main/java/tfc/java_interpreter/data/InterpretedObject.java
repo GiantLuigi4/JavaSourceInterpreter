@@ -30,6 +30,7 @@ public class InterpretedObject {
 	public LangObject getField(String name) {
 		if (fields.containsKey(name)) return fields.get(name);
 		if (!clazz.fields.containsKey(name)) return null;
+//		if (clazz.fields.get(name).isStatic) return clazz.getField(name).value;
 		LangObject workingVar = new LangObject();
 		{
 			JavaMethodMarker.locals = null;

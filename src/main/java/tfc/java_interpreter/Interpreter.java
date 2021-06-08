@@ -172,10 +172,26 @@ public class Interpreter {
 			Expression expression = parser.parse(s.substring(0, s.length() - 1));
 			expression = configuration.expressionOptimizations.optimize(expression);
 			field1.defaultExpression = expression;
-			double d = expression.get();
+			double val = expression.get();
+			field1.value = createInstance(field1.type);
+//			if (!s.equals("")) {
+//				Expression expression = parser.parse(s.substring(0, s.length() - 1));
+//				expression = configuration.expressionOptimizations.optimize(expression);
+//				field1.defaultExpression = expression;
+//				{
+//					double val = expression.get();
+//					field1.value = createInstance(field1.type);
+			field1.value.val = workingVar.val == null ? val : workingVar.val;
+//				}
+//			} else {
+//				field1.value = createInstance(field1.type);
+//				((InterpretedObject)field1.value.val).obj = null;
+//			}
+//			System.out.println(field1.value.val);
+			double d = field1.defaultExpression != null ? field1.defaultExpression.get() : 0;
 			if (configuration.verboseClassLoading) {
 				System.out.println(LogColors.TEXT_PURPLE + "    " + field.getType() + " : " + LogColors.TEXT_BLUE + field.getName());
-				System.out.println(LogColors.TEXT_CYAN + "      default: " + LogColors.TEXT_BLUE + expression + " = " + LogColors.TEXT_PURPLE + d);
+				System.out.println(LogColors.TEXT_CYAN + "      default: " + LogColors.TEXT_BLUE + field1.defaultExpression + " = " + LogColors.TEXT_PURPLE + d);
 				System.out.println(LogColors.TEXT_CYAN + "      access: " + LogColors.TEXT_BLUE + access.trim());
 				System.out.println(LogColors.TEXT_CYAN + "      static: " + LogColors.TEXT_BLUE + field1.isStatic + LogColors.TEXT_RESET);
 			}

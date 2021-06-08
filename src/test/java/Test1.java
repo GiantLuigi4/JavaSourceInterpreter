@@ -47,6 +47,8 @@ public class Test1 {
 	}
 	
 	public static void main(String[] args) {
+		test = new Test2();
+		test1 = new Test2();
 		{
 			Interpreter interpreter = new Interpreter();
 			interpreter.configuration.verboseMethodExecution = true;
@@ -62,12 +64,19 @@ public class Test1 {
 			obj1.val = interpreter.createInstance(test2);
 			obj2.val = interpreter.createInstance(test2);
 			
-			System.out.println((iobj.clazz.getMethod("doThing").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(test1))));
-			System.out.println((iobj.clazz.getMethod("codeBlocks").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(test1))));
+			boolean passes = true;
+			
+			double val = (double) iobj.clazz.getMethod("doThing").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(test1));
+			System.out.println(val);
+			int v2 = doThing();
+			System.out.println(v2);
+			passes = passes && v2 == val;
+			val = (Integer) iobj.clazz.getMethod("codeBlocks").invoke(interpreter.getStaticContext(null), interpreter.getStaticContext(test1));
+			System.out.println(val);
+			v2 = codeBlocks();
+			System.out.println(v2);
+			passes = passes && codeBlocks() == val;
+			System.out.println("passes: " + passes);
 		}
-		test = new Test2();
-		test1 = new Test2();
-		System.out.println(codeBlocks());
-		System.out.println(doThing());
 	}
 }

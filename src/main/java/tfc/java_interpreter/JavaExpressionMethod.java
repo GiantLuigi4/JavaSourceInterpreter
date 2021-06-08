@@ -79,6 +79,7 @@ public class JavaExpressionMethod extends Value {
 //					System.out.println(((InterpretedObject) (((InterpretedObject) (workingVar.val)).getField(s).val)).obj);
 					if (((InterpretedObject) workingVar.val).getField(s) != null)
 						workingVar.val = ((InterpretedObject) workingVar.val).getField(s).val;
+					if (workingVar.val instanceof LangObject) workingVar.val = ((LangObject) workingVar.val).val;
 //					System.out.println(((InterpretedObject)workingVar.val).obj);
 //					System.out.println(((InterpretedObject)workingVar.val).clazz);
 //					System.out.println(((InterpretedObject)workingVar.val).clazz == null);
